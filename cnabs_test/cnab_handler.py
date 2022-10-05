@@ -70,15 +70,16 @@ def inserir_db():
 
         with open("CNAB.txt", "r") as Lines:
             for line in Lines:
-                print(line)
                 tipo = line[0]
-                data = line[1:8]
-                valor = line[9:18]
-                cpf = line[19:29]
-                cartao = line[30:41]
-                hora = line[42:47]
+                data = line[1:9]
+                valor = int(line[9:19]) / 100
+                cpf = line[19:30]
+                cartao = line[30:42]
+                hora = line[42:48]
+                dono = line[48:62]
+                loja = line[62:81]
 
-                insert = f"INSERT INTO infos(type, date, value, cpf, card, hour) VALUES({tipo}, {data}, {valor}, {cpf}, {cartao}, {hora}  )"
+                insert = f"""INSERT INTO infos(type, date, value, cpf, card, hour, owner, store) VALUES ({tipo},{data},{valor},{cpf},'{cartao}',{hora},'{dono}','{loja}')"""
 
                 cur.execute(insert)
         conn.commit()
