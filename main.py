@@ -1,20 +1,10 @@
-from cnabs_test.cnab_handler import create_table, inserir_db
+from cnabs.views import inserir_db
 
-DATABASE_PATCH = "CNAB.txt"
+database = "CNAB.txt"
 
 
 def main():
-
-    # try:
-
-    create_table()
-    inserir_db()
-
-
-# except json.JSONDecodeError:
-#     return []
-# except FileNotFoundError:
-#     return []
+    inserir_db(database)
 
 
 if __name__ == "__main__":
