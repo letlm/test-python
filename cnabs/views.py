@@ -1,4 +1,5 @@
 import psycopg2
+from config import config
 from files.models import FileCnab
 from rest_framework.views import APIView, Request, Response
 
@@ -10,34 +11,32 @@ class ReturnInfos(APIView):
     def get(self, request: Request) -> Response:
 
         upload_file = FileCnab.objects.all()
-
-        conn = psycopg2.connect(
-            host="localhost",
-            database="teste",
-            port=5432,
-            user="letlm",
-            password="123456",
-        )
+        params = config()
+        conn = psycopg2.connect(**params)
         cur = conn.cursor()
+
         try:
+            for key in upload_file:
+                with open(key.file.path, "r") as Lines:
+                    for line in Lines:
+                        tipo = line[0]
+                        data = line[1:9]
+                        lst = list(data)
+                        data_format = f"{lst[0]}{lst[1]}{lst[2]}{lst[3]}-{lst[4]}{lst[5]}-{lst[6]}{lst[7]}"
+                        valor = int(line[9:19]) / 100
+                        cpf = line[19:30]
+                        cartao = line[30:42]
+                        hora = line[42:48]
+                        lst_h = list(hora)
+                        hora_format = f"{lst_h[0]}{lst_h[1]}:{lst_h[2]}{lst_h[3]}:{lst_h[4]}{lst_h[5]}"
+                        dono = line[48:62]
+                        loja = line[62:80]
 
-            with open(upload_file[0].file.path, "r") as Lines:
+                        query = f"""INSERT INTO cnabs_infostable(type, date, value, cpf, card, hour, owner, store) VALUES ({tipo},'{data_format}',{valor},{cpf},'{cartao}','{hora_format}','{dono}','{loja}')"""
 
-                for line in Lines:
-                    tipo = line[0]
-                    data = line[1:9]
-                    valor = int(line[9:19]) / 100
-                    cpf = line[19:30]
-                    cartao = line[30:42]
-                    hora = line[42:48]
-                    dono = line[48:62]
-                    loja = line[62:81]
+                        cur.execute(query)
 
-                    query = f"""INSERT INTO cnabs_infostable(type, date, value, cpf, card, hour, owner, store) VALUES ({tipo},{data},{valor},{cpf},'{cartao}',{hora},'{dono}','{loja}')"""
-
-                    cur.execute(query)
-
-            conn.commit()
+                conn.commit()
         except (Exception, psycopg2.DatabaseError) as error:
             print("Error: %s" % error)
             conn.rollback()
