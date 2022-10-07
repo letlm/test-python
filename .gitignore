@@ -1,4 +1,5 @@
 venv
 __pycache__
-bq.sqlite3
+dq.sqlite3
 .env
+database.ini
