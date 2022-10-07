@@ -1,54 +1,102 @@
-import json
-
 import psycopg2
-from django.shortcuts import render
 from files.models import FileCnab
-from rest_framework.views import APIView, Request, Response, status
+from rest_framework.views import APIView, Request, Response
+
+from cnabs.models import InfosTable
+from cnabs.serializer import CnabsSerializer
 
 
-class GetTable(APIView):
-    def get(self, request) -> Response:
+class ReturnInfos(APIView):
+    def get(self, request: Request) -> Response:
+
         upload_file = FileCnab.objects.all()
 
-        with open(upload_file[0], "r") as file:
-            import ipdb
+        conn = psycopg2.connect(
+            host="localhost",
+            database="teste",
+            port=5432,
+            user="letlm",
+            password="123456",
+        )
+        cur = conn.cursor()
+        try:
 
-            ipdb.set_trace()
-            return json.load(file)
+            with open(upload_file[0].file.path, "r") as Lines:
 
-        teste = upload_file[0]
+                for line in Lines:
+                    tipo = line[0]
+                    data = line[1:9]
+                    valor = int(line[9:19]) / 100
+                    cpf = line[19:30]
+                    cartao = line[30:42]
+                    hora = line[42:48]
+                    dono = line[48:62]
+                    loja = line[62:81]
 
-        # conn = psycopg2.connect(
-        #     host="localhost",
-        #     database="teste",
-        #     port=5432,
-        #     user="letlm",
-        #     password="123456",
-        # )
-        # cur = conn.cursor()
-        # try:
+                    query = f"""INSERT INTO cnabs_infostable(type, date, value, cpf, card, hour, owner, store) VALUES ({tipo},{data},{valor},{cpf},'{cartao}',{hora},'{dono}','{loja}')"""
 
-        #     with open(teste, "r") as Lines:
-        #         for line in Lines:
-        #             tipo = line[0]
-        #             data = line[1:9]
-        #             valor = int(line[9:19]) / 100
-        #             cpf = line[19:30]
-        #             cartao = line[30:42]
-        #             hora = line[42:48]
-        #             dono = line[48:62]
-        #             loja = line[62:81]
+                    cur.execute(query)
 
-        #             insert = f"""INSERT INTO cnabs_infostable(type, date, value, cpf, card, hour, owner, store) VALUES ({tipo},{data},{valor},{cpf},'{cartao}',{hora},'{dono}','{loja}')"""
+            conn.commit()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print("Error: %s" % error)
+            conn.rollback()
+            cur.close()
 
-        #             cur.execute(insert)
-        #     conn.commit()
+            return 1
+        cur.close()
 
-        # except (Exception, psycopg2.DatabaseError) as error:
-        #     print("Error: %s" % error)
-        #     conn.rollback()
-        #     cur.close()
-        #     return 1
-        # cur.close()
+        table = InfosTable.objects.all()
+        serializer = CnabsSerializer(table, many=True)
 
-        # return Response
+        return Response(serializer.data)
+
+
+# class GetTable(APIView):
+#     def get(self, request) -> Response:
+#         upload_file = FileCnab.objects.all()
+
+#         conn = psycopg2.connect(
+#             host="localhost",
+#             database="teste",
+#             port=5432,
+#             user="letlm",
+#             password="123456",
+#         )
+#         cur = conn.cursor()
+#         try:
+
+#             with open(upload_file[0].file.path, "r") as Lines:
+#                 # import ipdb
+
+#                 # ipdb.set_trace()
+#                 for line in Lines:
+#                     tipo = line[0]
+#                     data = line[1:9]
+#                     valor = line[9:19]
+#                     cpf = line[19:30]
+#                     cartao = line[30:42]
+#                     hora = line[42:48]
+#                     dono = line[48:62]
+#                     loja = line[62:81]
+
+#                     query = f"""INSERT INTO cnabs_infostable(type, date, value, cpf, card, hour, owner, store) VALUES ({tipo},{data},{valor},{cpf},'{cartao}',{hora},'{dono}','{loja}')"""
+
+#                     cur.execute(query)
+
+#             conn.commit()
+#         except (Exception, psycopg2.DatabaseError) as error:
+#             print("Error: %s" % error)
+#             conn.rollback()
+#             cur.close()
+
+#             return 1
+#         cur.close()
+
+#         get_table = InfosTable.objects.all()
+
+#         import ipdb
+
+#         ipdb.set_trace()
+
+#         return Response(get_table.values)

@@ -1,7 +1,7 @@
 from django.urls import path
 
-from cnabs.views import GetTable
+from cnabs.views import ReturnInfos
 
 urlpatterns = [
-    path("test/", GetTable.as_view()),
+    path("cnabs/", ReturnInfos.as_view()),
 ]
